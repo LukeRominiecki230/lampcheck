@@ -1,11 +1,11 @@
 Package: regexcite
-Title: What the Package Does (One Line, Title Case)
+Title: Simple Tools for Splitting Strings
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person("Lucian", "Rominiecki", , "lukerominiecki@gmail.com", role = c("aut", "cre"))
+Description: Provides simple functions for splitting strings and working
+    with regular expressions in a more convenient format..
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 8.1.0
+Config/roxygen2/version: 8.1.0
