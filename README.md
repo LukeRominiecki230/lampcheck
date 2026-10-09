@@ -1,76 +1,148 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-**NOTE: This is a toy package created for expository purposes, for the
-second edition of [R Packages](https://r-pkgs.org). It is not meant to
-actually be useful. If you want a package for factor handling, please
-see [stringr](https://stringr.tidyverse.org),
-[stringi](https://stringi.gagolewski.com/),
-[rex](https://cran.r-project.org/package=rex), and
-[rematch2](https://cran.r-project.org/package=rematch2).**
+# lampcheck
 
-# regexcite
+`lampcheck` is an R package for quick data-quality checks and
+accessible, Pixar-inspired visualization. It is designed to support
+exploratory data analysis by helping users identify potential issues in
+a dataset before analysis and by providing a consistent plotting theme.
 
-<!-- badges: start -->
-
-<!-- badges: end -->
-
-The goal of regexcite is to make regular expressions more exciting! It
-provides convenience functions to make some common tasks with string
-manipulation and regular expressions a bit easier.
+The package was developed using Pixar film data, but its main functions
+can be used with other datasets as well.
 
 ## Installation
 
-You can install the development version of regexcite from
-[GitHub](https://github.com/) with:
+You can install the development version of `lampcheck` from GitHub with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("jennybc/regexcite")
+devtools::install_github("LukeRominiecki230/lampcheck")
 ```
 
-## Usage
+## Data-quality checks
 
-A fairly common task when dealing with strings is the need to split a
-single string into many parts. This is what `base::strplit()` and
-`stringr::str_split()` do.
+The `lamp_check()` function gives a quick overview of a data frame
+before analysis. It reports the number of rows, columns, duplicated
+rows, and incomplete rows, then returns a variable-level summary of
+missingness and unique values.
 
 ``` r
-(x <- "alfa,bravo,charlie,delta")
-#> [1] "alfa,bravo,charlie,delta"
-strsplit(x, split = ",")
-#> [[1]]
-#> [1] "alfa"    "bravo"   "charlie" "delta"
-stringr::str_split(x, pattern = ",")
-#> [[1]]
-#> [1] "alfa"    "bravo"   "charlie" "delta"
+library(lampcheck)
+
+lamp_check(pixar_films)
+#> Rows: 27
+#> Columns: 5
+#> Duplicated rows: 0
+#> Incomplete rows: 3
+#>       variable      type missing percent_missing unique_values
+#> 1       number   numeric       0             0.0            27
+#> 2         film character       1             3.7            27
+#> 3 release_date      Date       0             0.0            27
+#> 4     run_time   numeric       2             7.4            20
+#> 5  film_rating character       0             0.0             4
 ```
 
-Notice how the return value is a **list** of length one, where the first
-element holds the character vector of parts. Often the shape of this
-output is inconvenient, i.e. we want the un-listed version.
+This kind of check can help identify potential problems before they
+affect later summaries or visualizations.
 
-That’s exactly what `regexcite::str_split_one()` does.
+## Pixar film data
+
+`lampcheck` includes two datasets used throughout the package examples.
+
+`pixar_films` contains basic information about Pixar films, including
+release date, runtime, and MPA rating.
+
+`public_response` contains several measures of public and critical
+reception, including Rotten Tomatoes, Metacritic, CinemaScore, and
+Critics Choice scores.
 
 ``` r
-library(regexcite)
-
-str_split_one(x, pattern = ",")
-#> [1] "alfa"    "bravo"   "charlie" "delta"
+head(pixar_films)
+#>   number            film release_date run_time film_rating
+#> 1      1       Toy Story   1995-11-22       81           G
+#> 2      2    A Bug's Life   1998-11-25       95           G
+#> 3      3     Toy Story 2   1999-11-24       92           G
+#> 4      4  Monsters, Inc.   2001-11-02       92           G
+#> 5      5    Finding Nemo   2003-05-30      100           G
+#> 6      6 The Incredibles   2004-11-05      115          PG
 ```
 
-Use `str_split_one()` when the input is known to be a single string. For
-safety, it will error if its input has length greater than one.
-
-`str_split_one()` is built on `stringr::str_split()`, so you can use its
-`n` argument and stringr’s general interface for describing the
-`pattern` to be matched.
+The two datasets can be combined using the shared `film` variable.
 
 ``` r
-str_split_one(x, pattern = ",", n = 2)
-#> [1] "alfa"                "bravo,charlie,delta"
+pixar_ratings <- dplyr::left_join(
+  pixar_films,
+  public_response,
+  by = "film"
+)
 
-y <- "192.168.0.1"
-str_split_one(y, pattern = stringr::fixed("."))
-#> [1] "192" "168" "0"   "1"
+head(pixar_ratings)
+#> # A tibble: 6 × 9
+#>   number film       release_date run_time film_rating rotten_tomatoes metacritic
+#>    <dbl> <chr>      <date>          <dbl> <chr>                 <dbl>      <dbl>
+#> 1      1 Toy Story  1995-11-22         81 G                       100         95
+#> 2      2 A Bug's L… 1998-11-25         95 G                        92         77
+#> 3      3 Toy Story… 1999-11-24         92 G                       100         88
+#> 4      4 Monsters,… 2001-11-02         92 G                        96         79
+#> 5      5 Finding N… 2003-05-30        100 G                        99         90
+#> 6      6 The Incre… 2004-11-05        115 PG                       97         90
+#> # ℹ 2 more variables: cinema_score <chr>, critics_choice <dbl>
+```
+
+## Lightyear plotting theme
+
+`theme_lightyear()` is a custom `ggplot2` theme inspired by Buzz
+Lightyear. The package’s main brand colors are purple (`#5A2D82`) and
+yellow-green (`#D7F171`).
+
+``` r
+ggplot2::ggplot(
+  pixar_ratings,
+  ggplot2::aes(x = release_date, y = rotten_tomatoes)
+) +
+  ggplot2::geom_point(
+    size = 3,
+    color = "#5A2D82",
+    na.rm = TRUE
+  ) +
+  ggplot2::labs(
+    title = "Pixar Films on Rotten Tomatoes",
+    x = "Release date",
+    y = "Rotten Tomatoes score"
+  ) +
+  theme_lightyear()
+```
+
+<img src="man/figures/README-unnamed-chunk-5-1.png" alt="Scatterplot showing Pixar film release dates and Rotten Tomatoes scores." width="100%" />
+
+The plotting theme uses the package colors as accents while retaining a
+light plotting background. This keeps the visual identity recognizable
+without making the styling compete with the data.
+
+## Branding and accessibility
+
+The `lampcheck` brand is inspired by Buzz Lightyear’s purple and bright
+yellow-green color scheme. Purple (`#5A2D82`) is used as the primary
+background and dark accent, while yellow-green (`#D7F171`) is used as
+the primary foreground and bright accent.
+
+The package separates its general brand styling from its statistical
+plotting style. The `_brand.yml` file uses the purple and yellow-green
+pair strongly, while `theme_lightyear()` keeps the main plotting panel
+white and uses the brand colors more selectively. This preserves
+readability and leaves room for color to represent data when needed.
+
+The purple and yellow-green foreground/background pairing has a contrast
+ratio of approximately 7.84:1, meeting the WCAG AAA threshold for normal
+text. The brand also uses a sans-serif font family to keep the
+typography simple and broadly readable.
+
+## Vignette
+
+For a fuller example of a Pixar analysis using `lamp_check()`,
+`theme_lightyear()`, and common data moves, see:
+
+``` r
+vignette("my-vignette", package = "lampcheck")
 ```

@@ -1,21 +1,24 @@
-Package: regexcite
-Title: Simple Tools for Splitting Strings
+Package: lampcheck
+Title: Data Quality Checks and Accessible Plotting Tools
 Version: 0.0.0.9000
 Authors@R: 
     person("Lucian", "Rominiecki", , "lukerominiecki@gmail.com", role = c("aut", "cre"))
-Description: Provides simple functions for splitting strings and working
-    with regular expressions in a more convenient format..
+Description: Provides lightweight tools for checking data quality before analysis and creating clear, accessible visualizations. The package supports exploratory data analysis by helping identify potential issues such as missing data and incomplete observations and by providing a custom ggplot2 theme.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Config/roxygen2/version: 8.1.0
 Suggests: 
+    dplyr,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Imports: 
-    stringr
-URL: https://github.com/LukeRominiecki230/regexcite
-BugReports: https://github.com/LukeRominiecki230/regexcite/issues
+URL: https://github.com/LukeRominiecki230/lampcheck
+BugReports: https://github.com/LukeRominiecki230/lampcheck/issues
 VignetteBuilder: knitr
+Imports: 
+    ggplot2
+Depends: 
+    R (>= 3.5)
+LazyData: true

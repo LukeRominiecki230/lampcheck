@@ -1,6 +1,10 @@
-^regexcite\.Rproj$
+^lampcheck\.Rproj$
 ^\.Rproj\.user$
 ^\.positai$
 ^\.claude$
 ^LICENSE\.md$
 ^README\.Rmd$
+^data-raw$
+^doc$
+^Meta$
+^_brand\.yml$

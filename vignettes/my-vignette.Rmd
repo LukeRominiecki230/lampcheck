@@ -1,8 +1,8 @@
 ---
-title: "Getting Started with My Vignette"
+title: "Checking and Exploring Pixar Films with lampcheck"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Getting Started with My Vignette}
+  %\VignetteIndexEntry{Checking and Exploring Pixar Films with lampcheck}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -10,10 +10,167 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
 )
 ```
 
-```{r setup}
-library(regexcite)
+```{r setup, message=FALSE, warning=FALSE}
+library(lampcheck)
+library(dplyr)
+library(ggplot2)
+
+data("pixar_films", package = "lampcheck")
+data("public_response", package = "lampcheck")
 ```
+
+## Getting started
+
+`lampcheck` provides simple tools for checking data before analysis and for
+creating accessible, Pixar-inspired visualizations. This vignette uses Pixar
+film and public-response data from the March 11, 2025 TidyTuesday dataset to
+demonstrate a basic exploratory workflow.
+
+The two datasets contain different kinds of information. `pixar_films`
+contains release information such as runtime and MPA rating, while
+`public_response` contains several measures of critical and audience
+reception. Before combining or analyzing them, it is useful to inspect the
+data for potential quality issues.
+
+## Start with a data check
+
+```{r lamp-check}
+lamp_check(pixar_films)
+```
+
+The check shows that the film dataset contains no duplicated rows, but it does
+contain some missing values. Rather than automatically removing every
+incomplete observation, the next steps only remove records that cannot be
+identified by film title.
+
+## Filter records that cannot be identified
+
+Because film title is the variable used to connect the two datasets, a missing
+film title prevents a meaningful match.
+
+```{r filter}
+pixar_films_clean <- pixar_films |>
+  filter(!is.na(film))
+```
+
+This keeps observations with missing values in other variables, such as
+runtime, because those values may still be useful for analyses that do not
+depend on runtime.
+
+## Join film information with public response
+
+The two datasets share the variable `film`, so a left join can add the
+reception measures to the film information while retaining the Pixar film
+records.
+
+```{r join}
+pixar_ratings <- pixar_films_clean |>
+  left_join(public_response, by = "film")
+```
+
+A second data check shows what the combined analysis table looks like after
+the join.
+
+```{r joined-check}
+lamp_check(pixar_ratings)
+```
+
+## Create variables for exploration
+
+A release year is easier to use in summaries and plots than a complete date.
+It is also useful to compare Rotten Tomatoes and Metacritic scores directly.
+
+```{r mutate}
+pixar_ratings <- pixar_ratings |>
+  mutate(
+    release_year = as.integer(format(release_date, "%Y")),
+    critic_score_gap = rotten_tomatoes - metacritic
+  )
+```
+
+Positive values of `critic_score_gap` indicate that a film's Rotten Tomatoes
+score is higher than its Metacritic score, while negative values indicate the
+opposite.
+
+## Arrange films by critical reception
+
+Sorting the joined data makes it easy to see which films received the highest
+Rotten Tomatoes scores.
+
+```{r arrange}
+pixar_ratings |>
+  arrange(desc(rotten_tomatoes)) |>
+  select(film, release_year, rotten_tomatoes, metacritic) |>
+  head(10)
+```
+
+This view is useful for identifying individual films that stand out before
+moving to broader summaries.
+
+## Summarize reception by film rating
+
+Pixar films can also be compared by their MPA rating. Grouping and summarizing
+the data provides a simple comparison of average Rotten Tomatoes scores across
+rating categories.
+
+```{r group-summarise}
+rating_summary <- pixar_ratings |>
+  group_by(film_rating) |>
+  summarise(
+    films = n(),
+    mean_rotten_tomatoes = mean(rotten_tomatoes, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  arrange(desc(mean_rotten_tomatoes))
+
+rating_summary
+```
+
+These averages are descriptive rather than causal. They provide one way to
+look for patterns that could motivate additional exploration.
+
+## Visualize Pixar's release history
+
+The package's `theme_lightyear()` function uses the purple and yellow-green
+palette inspired by Buzz Lightyear while keeping the plotting panel light and
+readable.
+
+```{r plot, fig.alt="Scatterplot of Pixar film release year against Rotten Tomatoes score, with films separated into panels by MPA film rating."}
+ggplot(
+  pixar_ratings,
+  aes(x = release_year, y = rotten_tomatoes)
+) +
+  geom_point(
+    size = 3,
+    color = "#5A2D82",
+    na.rm = TRUE
+  ) +
+  facet_wrap(~ film_rating) +
+  labs(
+    title = "Pixar Films on Rotten Tomatoes",
+    subtitle = "Critical reception across Pixar's release history",
+    x = "Release year",
+    y = "Rotten Tomatoes score"
+  ) +
+  theme_lightyear()
+```
+
+The custom theme uses the package's Buzz Lightyear-inspired colors for visual
+identity, but it does not force those colors onto the data itself. This keeps
+the theme flexible for plots in which color may need to encode another
+variable.
+
+## Putting the workflow together
+
+This exploration demonstrates a workflow in which data quality is considered
+before analysis rather than after a problem appears. `lamp_check()` provides
+a quick view of missingness and other basic characteristics, while the data
+moves build an analysis table, create useful variables, identify notable
+observations, and summarize broader patterns. `theme_lightyear()` then provides
+a consistent visual style for communicating the results.

@@ -1,0 +1,24 @@
+meta:
+  name: lampcheck
+
+color:
+  palette:
+    lightyear-purple: "#5A2D82"
+    lightyear-green: "#D7F171"
+    white: "#FFFFFF"
+    black: "#000000"
+
+  background: lightyear-purple
+  foreground: lightyear-green
+  primary: lightyear-green
+  secondary: white
+  light: white
+  dark: lightyear-purple
+
+typography:
+  base:
+    family: sans-serif
+
+  headings:
+    family: sans-serif
+    weight: bold
